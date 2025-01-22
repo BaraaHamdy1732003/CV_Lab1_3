@@ -1,0 +1,88 @@
+import cv2
+import numpy as np
+import matplotlib.pyplot as plt
+
+def process_image(image_path):
+    # 1. Load the image
+    image = cv2.imread(image_path)
+    
+    if image is None:
+        print("Error: Image not found.")
+        return
+
+    # 2. Gaussian Blur
+    blurred_image = cv2.GaussianBlur(image, (5, 5), 0)
+
+    # 3. Sharpening Methods
+    # 3.1 Kernel-based sharpening
+    kernel = np.array([[0, -1, 0],
+                       [-1, 5, -1],
+                       [0, -1, 0]])
+    sharpened_kernel = cv2.filter2D(image, -1, kernel)
+
+    # 3.2 Unsharp Masking
+    blurred = cv2.GaussianBlur(image, (5, 5), 0)
+    sharpened_unsharp = cv2.addWeighted(image, 1.5, blurred, -0.5, 0)
+
+    # 4. Sobel Edge Detection
+    gray_image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    sobelx = cv2.Sobel(gray_image, cv2.CV_64F, 1, 0, ksize=5)
+    sobely = cv2.Sobel(gray_image, cv2.CV_64F, 0, 1, ksize=5)
+    edges = cv2.magnitude(sobelx, sobely)
+    edges = cv2.convertScaleAbs(edges)
+
+    # Convert edges to a three-channel image
+    edges_colored = cv2.cvtColor(edges, cv2.COLOR_GRAY2BGR)
+
+    # 5. Combine results
+    combined_1 = cv2.addWeighted(blurred_image, 0.5, edges_colored, 0.5, 0)
+    combined_final = cv2.addWeighted(combined_1, 0.5, sharpened_kernel, 0.5, 0)
+
+    # 6. Display results
+    def show_images():
+        plt.figure(figsize=(12, 10))
+        
+        # Original image
+        plt.subplot(2, 3, 1)
+        plt.title('Original Image')
+        plt.imshow(cv2.cvtColor(image, cv2.COLOR_BGR2RGB))
+        plt.axis('off')
+        
+        # Gaussian Blur
+        plt.subplot(2, 3, 2)
+        plt.title('Gaussian Blur')
+        plt.imshow(cv2.cvtColor(blurred_image, cv2.COLOR_BGR2RGB))
+        plt.axis('off')
+        
+        # Sobel Edge Detection
+        plt.subplot(2, 3, 3)
+        plt.title('Edge Detection (Sobel)')
+        plt.imshow(edges_colored)  # Use colored edges here
+        plt.axis('off')
+        
+        # Kernel Sharpening
+        plt.subplot(2, 3, 4)
+        plt.title('Sharpened (Kernel)')
+        plt.imshow(cv2.cvtColor(sharpened_kernel, cv2.COLOR_BGR2RGB))
+        plt.axis('off')
+        
+        # Unsharp Masking
+        plt.subplot(2, 3, 5)
+        plt.title('Sharpened (Unsharp Masking)')
+        plt.imshow(cv2.cvtColor(sharpened_unsharp, cv2.COLOR_BGR2RGB))
+        plt.axis('off')
+        
+        # Combined Result
+        plt.subplot(2, 3, 6)
+        plt.title('Combined Result')
+        plt.imshow(cv2.cvtColor(combined_final, cv2.COLOR_BGR2RGB))
+        plt.axis('off')
+
+        plt.tight_layout()
+        plt.show()
+
+    show_images()
+
+# Replace 'image.jpg' with the path to your image
+process_image('/content/_.jpeg')
+
